@@ -1,0 +1,33 @@
+# Foundry
+/out/
+/cache/
+/broadcast/
+
+# Node
+node_modules/
+.next/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+lcov.info
+coverage/
+
+# Context (cloned repos for reference only)
+context/
+
+# Demo video (too large for git)
+demo/*.mp4
+demo/*.mov
