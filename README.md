@@ -1,4 +1,3 @@
-
 # ConfluxMind
 
 > Autonomous DeFAI yield optimization — your capital, always working at peak efficiency.
@@ -82,12 +81,12 @@ The result: deposit once, earn optimized yield perpetually, withdraw whenever.
 
 ### Key Metrics
 
-| Metric | 30-Day Target | 90-Day Target |
-|--------|--------------|---------------|
-| TVL | $50K | $500K |
-| Unique depositors | 200 | 1,500 |
-| Rebalance events | 30 | 150 |
-| Gas sponsored (USD equiv.) | $500 | $3,000 |
+| Metric             | 30-Day Target | 90-Day Target |
+| ------------------ | ------------- | ------------- |
+| TVL                | $50K          | $500K         |
+| Unique depositors  | 200           | 1,500         |
+| Rebalance events   | 30            | 150           |
+| Gas sponsored (USD) | $500         | $3,000        |
 
 ---
 
@@ -129,7 +128,7 @@ ConfluxMind is built natively for Conflux eSpace and leverages multiple Conflux-
 - **Smart Contracts:** Solidity ^0.8.24, Foundry (forge, cast, anvil)
 - **Protocol Integrations:** dForce Unitus SDK, SHUI Finance sFX interface, WallFreeX router
 - **Conflux-Specific:** `SponsorWhitelistControl` built-in contract, Conflux eSpace RPC (`evm.confluxrpc.com`)
-- **Testing:** Forge test suite with Conflux eSpace mainnet fork, 100% branch coverage target
+- **Testing:** Forge test suite with 31 passing tests
 - **DevOps:** GitHub Actions CI, Tenderly for contract monitoring and alerting
 
 ---
@@ -162,7 +161,7 @@ ConfluxMind is built natively for Conflux eSpace and leverages multiple Conflux-
 3. Install frontend and keeper dependencies
 
    ```bash
-   npm install
+   npm run install:all
    ```
 
 4. Configure environment
@@ -266,7 +265,8 @@ await keeper.start(); // begins polling and auto-rebalancing
 
 ## Demo
 
-- **Live Demo:** https://conflux-mind.vercel.app *(testnet deployment)*
+- **Live Demo:** [https://frontend-three-chi-42.vercel.app](https://frontend-three-chi-42.vercel.app) *(testnet deployment)*
+- **About Page:** [https://frontend-three-chi-42.vercel.app/about](https://frontend-three-chi-42.vercel.app/about)
 - **Demo Video:** [YouTube — ConfluxMind walkthrough](https://youtube.com/watch?v=TBD)
 - **Screenshots:** See `/demo/screenshots/` folder
 
@@ -274,7 +274,7 @@ await keeper.start(); // begins polling and auto-rebalancing
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        User Interface                            │
 │           React + Next.js + Wagmi (Conflux eSpace)              │
@@ -326,23 +326,24 @@ await keeper.start(); // begins polling and auto-rebalancing
 
 ### Testnet (Conflux eSpace Testnet — Chain ID: 71)
 
-| Contract | Address |
-|----------|---------|
-| `ConfluxMindVault` | `0x...` (to be deployed) |
-| `StrategyController` | `0x...` |
-| `GasSponsorManager` | `0x...` |
-| `dForceUnitusAdapter` | `0x...` |
-| `SHUIFinanceAdapter` | `0x...` |
-| `WallFreeXAdapter` | `0x...` |
+| Contract                     | Address                                                                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MockUSDT`                   | [`0x1Fb61DC9751c3c0259E2E70E1af5968012953667`](https://evmtestnet.confluxscan.org/address/0x1Fb61DC9751c3c0259E2E70E1af5968012953667)                 |
+| `ConfluxMindVault`           | [`0x76Cbe8f11FdaC8edE2a49E297163508af9A17cF2`](https://evmtestnet.confluxscan.org/address/0x76Cbe8f11FdaC8edE2a49E297163508af9A17cF2)                 |
+| `StrategyController`         | [`0x766d707FA8deD8F23C3bF65e547d19aA5F154188`](https://evmtestnet.confluxscan.org/address/0x766d707FA8deD8F23C3bF65e547d19aA5F154188)                 |
+| `GasSponsorManager`          | [`0x0105543D716AbE2dc96c41d6AEA913a3A0603eFA`](https://evmtestnet.confluxscan.org/address/0x0105543D716AbE2dc96c41d6AEA913a3A0603eFA)                 |
+| `dForce Strategy (Mock)`     | [`0x6926165994325ABC6e551af84EdCBab98Af4eFe3`](https://evmtestnet.confluxscan.org/address/0x6926165994325ABC6e551af84EdCBab98Af4eFe3)                 |
+| `SHUI Strategy (Mock)`       | [`0xF94A8F5CfA9E0FD1D0920419b936181eC1790be8`](https://evmtestnet.confluxscan.org/address/0xF94A8F5CfA9E0FD1D0920419b936181eC1790be8)                 |
+| `WallFreeX Strategy (Mock)`  | [`0xF0A7dbCCBcB3F315103cf7e6368A5b0CdBCf0e10`](https://evmtestnet.confluxscan.org/address/0xF0A7dbCCBcB3F315103cf7e6368A5b0CdBCf0e10)                 |
 
 ### Mainnet (Conflux eSpace — Chain ID: 1030)
 
-| Contract | Address |
-|----------|---------|
-| `ConfluxMindVault` | Post-hackathon deployment |
-| `StrategyController` | Post-hackathon deployment |
+| Contract            | Address                    |
+| ------------------- | -------------------------- |
+| `ConfluxMindVault`  | Post-hackathon deployment  |
+| `StrategyController`| Post-hackathon deployment  |
 
-*All contracts verified on [ConfluxScan](https://evm.confluxscan.io)*
+*All contracts verified on [ConfluxScan](https://evmtestnet.confluxscan.org)*
 
 ---
 
