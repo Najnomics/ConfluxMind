@@ -31,3 +31,6 @@ context/
 # Demo video (too large for git)
 demo/*.mp4
 demo/*.mov
+
+# Foundry broadcast
+broadcast/
