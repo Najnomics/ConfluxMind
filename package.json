@@ -1,0 +1,33 @@
+{
+  "name": "conflux-mind",
+  "version": "1.0.0",
+  "description": "Autonomous DeFAI yield optimization on Conflux eSpace",
+  "private": true,
+  "scripts": {
+    "build:contracts": "forge build",
+    "test:contracts": "forge test -vvv",
+    "coverage": "forge coverage --report lcov",
+    "deploy:testnet": "bash deployment/deploy-testnet.sh",
+    "dev": "cd src/frontend && npm run dev",
+    "build:frontend": "cd src/frontend && npm run build",
+    "keeper": "cd src/keeper && npm run start",
+    "keeper:dev": "cd src/keeper && npm run dev",
+    "install:all": "npm install && cd src/frontend && npm install && cd ../keeper && npm install",
+    "lint:sol": "forge fmt --check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/najnomics/conflux-mind"
+  },
+  "keywords": [
+    "defi",
+    "yield",
+    "conflux",
+    "espace",
+    "erc4626",
+    "ai",
+    "defai"
+  ],
+  "author": "Nosakhare Jesuorobo <najnomics>",
+  "license": "MIT"
+}
