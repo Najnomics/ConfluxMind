@@ -265,8 +265,8 @@ await keeper.start(); // begins polling and auto-rebalancing
 
 ## Demo
 
-- **Live Demo:** [https://frontend-three-chi-42.vercel.app](https://frontend-three-chi-42.vercel.app) *(testnet deployment)*
-- **About Page:** [https://frontend-three-chi-42.vercel.app/about](https://frontend-three-chi-42.vercel.app/about)
+- **Live Demo:** [https://confluxmind.vercel.app](https://confluxmind.vercel.app) *(testnet deployment)*
+- **About Page:** [https://confluxmind.vercel.app/about](https://confluxmind.vercel.app/about)
 - **Demo Video:** [YouTube — ConfluxMind walkthrough](https://youtube.com/watch?v=TBD)
 - **Screenshots:** See `/demo/screenshots/` folder
 
