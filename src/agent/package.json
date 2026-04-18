@@ -1,0 +1,30 @@
+{
+  "name": "confluxmind-agent",
+  "version": "1.0.0",
+  "description": "AIflux-inspired AI agent for ConfluxMind yield optimization on Conflux eSpace",
+  "type": "module",
+  "scripts": {
+    "start": "node --loader ts-node/esm src/index.ts",
+    "dev": "node --loader ts-node/esm src/index.ts"
+  },
+  "dependencies": {
+    "@cfxdevkit/geckoterminal": "^0.2.0",
+    "@conflux-devkit/node": "^0.1.0",
+    "ethers": "^6.0.0",
+    "dotenv": "^16.0.0",
+    "typescript": "^5.5.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.11.0"
+  },
+  "peerDependencies": {
+    "@elizaos/core": ">=0.25.0"
+  },
+  "peerDependenciesMeta": {
+    "@elizaos/core": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
