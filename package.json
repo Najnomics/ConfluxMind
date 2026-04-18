@@ -10,9 +10,11 @@
     "deploy:testnet": "bash deployment/deploy-testnet.sh",
     "dev": "cd src/frontend && npm run dev",
     "build:frontend": "cd src/frontend && npm run build",
+    "agent": "cd src/agent && npm run start",
+    "agent:dev": "cd src/agent && npm run dev",
     "keeper": "cd src/keeper && npm run start",
     "keeper:dev": "cd src/keeper && npm run dev",
-    "install:all": "npm install && cd src/frontend && npm install && cd ../keeper && npm install",
+    "install:all": "npm install && cd src/frontend && npm install && cd ../agent && npm install && cd ../keeper && npm install",
     "lint:sol": "forge fmt --check"
   },
   "repository": {
