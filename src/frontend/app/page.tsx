@@ -3,6 +3,7 @@ import StatsCards from "@/components/StatsCards";
 import DepositWithdraw from "@/components/DepositWithdraw";
 import StrategyChart from "@/components/StrategyChart";
 import RebalanceHistory from "@/components/RebalanceHistory";
+import AIReasoning from "@/components/AIReasoning";
 
 export default function DashboardPage() {
   return (
@@ -34,7 +35,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Rebalance history */}
+        {/* AI Reasoning — 3-factor scoring model */}
+        <AIReasoning />
+
+        {/* Strategy status */}
         <RebalanceHistory />
 
         {/* Footer */}
@@ -43,7 +47,7 @@ export default function DashboardPage() {
             ConfluxMind - Autonomous DeFAI Yield Optimizer on Conflux eSpace
           </p>
           <p className="mt-1 text-xs text-slate-600">
-            Powered by AI agents with gasless meta-transactions
+            Powered by AIflux (Eliza) agents with gasless meta-transactions
           </p>
         </footer>
       </main>
