@@ -51,7 +51,12 @@ ConfluxMind introduces a three-layer architecture:
 
 **1. The Vault Layer** — An ERC-4626 compliant smart contract that accepts user deposits in supported assets (USDT0, AxCNH, CFX). Shares are minted representing proportional ownership of vault assets plus accrued yield. Withdrawals are available at any time, no lockups.
 
-**2. The AI Strategy Layer** — A Solidity `StrategyController` contract maintains a weighted allocation across registered yield strategies. Strategy weights are updated by a permissioned off-chain AI agent (the "Keeper") that aggregates on-chain signals — current lending rates from dForce, SHUI staking APY, WallFreeX pool depths and fee tiers — and computes optimal allocations using a risk-adjusted yield model. The Keeper submits a signed `rebalance(weights[])` call on-chain; the StrategyController validates, then atomically rebalances.
+**2. The AI Strategy Layer** — A Solidity `StrategyController` contract maintains a weighted allocation across registered yield strategies. Strategy weights are updated by an AIflux-inspired autonomous agent (built on the Eliza action pattern from [cfxdevkit/AIflux](https://github.com/cfxdevkit/AIflux)) that uses a **3-factor scoring model** to evaluate each strategy:
+  - **Yield Rate (40%)** — current on-chain APY from strategy contracts
+  - **Utilization Risk (30%)** — pool utilization ratio (higher utilization = higher withdrawal delay risk)
+  - **Liquidity Depth (30%)** — TVL from GeckoTerminal via `@cfxdevkit/geckoterminal`
+
+  The agent computes composite scores, converts them to allocation weights, and submits `rebalance(weights[])` on-chain when the delta exceeds the configured threshold. All reasoning is logged transparently.
 
 **3. The Gasless UX Layer** — Conflux's Fee Sponsorship mechanism is used to sponsor all vault deposit, withdraw, and claim transactions. A `GasSponsorManager` contract auto-maintains the sponsor whitelist, funded from a portion of protocol fees. Users with zero CFX balance can still interact fully.
 
@@ -109,12 +114,12 @@ ConfluxMind is built natively for Conflux eSpace and leverages multiple Conflux-
 
 ## Features
 
-- **Autonomous Yield Optimization** — On-chain AI Keeper continuously monitors and rebalances across dForce, SHUI Finance, and WallFreeX based on live yield signals
+- **Autonomous Yield Optimization** — AIflux-inspired AI agent continuously monitors and rebalances across dForce, SHUI Finance, and WallFreeX using a 3-factor scoring model (yield rate, utilization risk, liquidity depth)
 - **ERC-4626 Compliant Vault** — Standard share accounting; composable with any DeFi protocol that reads ERC-4626 vaults
 - **Gasless User Experience** — Conflux's Fee Sponsorship mechanism eliminates all gas costs for end users; zero CFX required to deposit or withdraw
 - **Multi-Asset Support** — Accepts USDT0, AxCNH, and CFX as deposit assets; auto-converts to strategy-optimal form
-- **Real-Time Rebalancing** — Keeper triggers rebalance when yield delta between strategies exceeds a configurable threshold (default: 50bps)
-- **Transparent Strategy Execution** — All rebalance events are logged on-chain with full allocation weights and yield rationale
+- **Real-Time Rebalancing** — AI agent triggers rebalance when yield delta between strategies exceeds a configurable threshold (default: 50bps)
+- **Transparent AI Reasoning** — All rebalance decisions are logged with full 3-factor scoring breakdown visible on the dashboard and on-chain
 - **Non-Custodial** — Users hold ERC-4626 shares; no admin key can access underlying assets
 - **Emergency Withdrawal** — Circuit breaker allows immediate full withdrawal bypassing keeper logic if triggered
 
@@ -122,14 +127,13 @@ ConfluxMind is built natively for Conflux eSpace and leverages multiple Conflux-
 
 ## Technology Stack
 
-- **Frontend:** React 18, Next.js 14, Wagmi v2, Viem, TailwindCSS, Recharts (yield history charts)
-- **Backend / Keeper:** Node.js 20, TypeScript, on-chain event listener via `ethers.js` v6, cron-based rebalance scheduler
+- **Frontend:** React 18, Next.js 14, Wagmi v2, Viem, TailwindCSS, Recharts, `@cfxdevkit/geckoterminal`
+- **AI Agent:** AIflux-inspired (Eliza action pattern), Node.js 20, TypeScript, `ethers.js` v6, `@cfxdevkit/geckoterminal`, `@conflux-devkit/node`
 - **Blockchain:** Conflux eSpace (Chain ID: 1030 mainnet / 71 testnet)
-- **Smart Contracts:** Solidity ^0.8.24, Foundry (forge, cast, anvil)
-- **Protocol Integrations:** dForce Unitus SDK, SHUI Finance sFX interface, WallFreeX router
-- **Conflux-Specific:** `SponsorWhitelistControl` built-in contract, Conflux eSpace RPC (`evm.confluxrpc.com`)
+- **Smart Contracts:** Solidity ^0.8.24, Foundry (forge, cast, anvil), OpenZeppelin ERC-4626
+- **Protocol Integrations:** dForce Unitus, SHUI Finance sFX, WallFreeX router
+- **Conflux Ecosystem Tools:** `@cfxdevkit/geckoterminal`, `@conflux-devkit/node`, `SponsorWhitelistControl` built-in
 - **Testing:** Forge test suite with 31 passing tests
-- **DevOps:** GitHub Actions CI, Tenderly for contract monitoring and alerting
 
 ---
 
@@ -240,25 +244,42 @@ forge coverage --report lcov
 
 3. **Deposit** — Click "Deposit". The vault mints `cmTokens` (ERC-4626 shares) representing your proportional stake. Your tokens begin earning optimized yield immediately.
 
-4. **Monitor** — The dashboard shows your current position value, APY, accumulated yield, and a real-time feed of the AI Keeper's rebalance decisions with reasoning.
+4. **Monitor** — The dashboard shows your current position value, APY, accumulated yield, the AI agent's 3-factor scoring breakdown, and a real-time feed of rebalance decisions with full reasoning.
 
 5. **Withdraw** — Click "Withdraw" and specify share amount or percentage. Funds arrive in your wallet within the same transaction. No unlock period.
 
 ### For Developers (Keeper Integration)
 
-The Keeper service polls on-chain state on a 5-minute interval:
+The AI agent polls on-chain state on a 5-minute interval, scoring each strategy with a 3-factor model:
 
-```typescript
-import { ConfluxMindKeeper } from '@conflux-mind/keeper';
+```bash
+# Start the AIflux agent
+npm run agent
+```
 
-const keeper = new ConfluxMindKeeper({
-  vaultAddress: '0x...',
-  rpcUrl: process.env.CONFLUX_ESPACE_RPC,
-  privateKey: process.env.KEEPER_PRIVATE_KEY,
-  rebalanceThresholdBps: 50,
-});
+Example reasoning output:
+```
+ConfluxMind AI — Strategy Analysis
 
-await keeper.start(); // begins polling and auto-rebalancing
+Strategy: dForce Unitus Lending
+  Yield Rate: 8.00% APY → Score: 67/100
+  Utilization Risk: 45% utilized → Score: 78/100 (low risk)
+  Liquidity Depth: $2.1M TVL → Score: 85/100 (deep)
+  Composite: 75.3
+
+Strategy: SHUI Finance Staking
+  Yield Rate: 5.00% APY → Score: 42/100
+  Utilization Risk: N/A (staking) → Score: 90/100 (minimal)
+  Liquidity Depth: $5.4M TVL → Score: 95/100 (very deep)
+  Composite: 72.1
+
+Strategy: WallFreeX LP
+  Yield Rate: 12.00% APY → Score: 100/100
+  Utilization Risk: 72% utilized → Score: 44/100 (moderate risk)
+  Liquidity Depth: $800K TVL → Score: 45/100 (shallow)
+  Composite: 65.8
+
+Decision: Rebalance to [35%, 34%, 31%] — dForce leads on risk-adjusted basis
 ```
 
 ---
@@ -289,12 +310,12 @@ await keeper.start(); // begins polling and auto-rebalancing
 │  │   burn + yield)  │    │    built-in at 0x0888...)        │   │
 │  └──────────────────┘    └──────────────────────────────────┘   │
 └──────────────┬─────────────────────────────────────────────────┘
-               │  allocate / rebalance (keeper-signed)
+               │  allocate / rebalance (agent-signed)
                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  StrategyController.sol                          │
 │   Maintains weighted allocation across registered strategies     │
-│   Validates Keeper signatures · Executes atomic rebalances       │
+│   Validates agent calls · Executes atomic rebalances             │
 └──────┬──────────────────┬────────────────────────┬─────────────┘
        │                  │                          │
        ▼                  ▼                          ▼
@@ -309,14 +330,15 @@ await keeper.start(); // begins polling and auto-rebalancing
                ▲  yield signals (every 5 min)
                │
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Off-Chain AI Keeper                          │
-│  Node.js · Reads on-chain rates · Computes optimal weights       │
+│              AIflux Agent (Eliza Action Pattern)                  │
+│  3-Factor Model: Yield Rate · Utilization Risk · Liquidity Depth │
+│  @cfxdevkit/geckoterminal · @conflux-devkit/node · ethers.js     │
 │  Signs rebalance calldata · Submits to StrategyController        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 **Key Design Decisions:**
-- The Keeper is permissioned but non-custodial — it can only call `rebalance()`, never touch user funds directly.
+- The AI agent is permissioned but non-custodial — it can only call `rebalance()`, never touch user funds directly. Built on the Eliza action pattern from [cfxdevkit/AIflux](https://github.com/cfxdevkit/AIflux).
 - All strategy adapters implement a common `IStrategy` interface, making new protocol integrations a single adapter contract.
 - ERC-4626 compliance ensures ConfluxMind vault shares are natively composable with any future Conflux DeFi protocol.
 
@@ -353,9 +375,10 @@ await keeper.start(); // begins polling and auto-rebalancing
 - **Risk Tiers** — Conservative / Balanced / Aggressive vault variants with different strategy weight constraints
 - **On-chain Governance** — CFX-holder governance to vote on strategy whitelisting and fee parameters
 - **Additional Strategy Integrations** — Swappi, GinsengSwap, Orbit Finance, KinetFlow liquidity provisioning
-- **Keeper Decentralization** — Replace single permissioned Keeper with a decentralized keeper network with slashable bonds
+- **Agent Decentralization** — Replace single permissioned agent with a decentralized agent network with slashable bonds
+- **Full Eliza Runtime** — Upgrade from standalone polling to full AIflux/ElizaOS runtime with Discord, Telegram, and Twitter connectors
 - **Mobile Support** — React Native app with Fluent Wallet deep-link integration
-- **Known Limitations:** Current Keeper is centralized (single EOA signer); rate oracle is pulled directly from contract state rather than a TWAP — mitigations planned for post-hackathon production release
+- **Known Limitations:** Current AI agent is centralized (single EOA signer); Gas Sponsorship via SponsorWhitelistControl requires Core Space deployment for full gasless UX (eSpace uses meta-transaction alternatives) — mitigations planned for post-hackathon production release
 
 ---
 
