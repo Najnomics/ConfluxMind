@@ -2,6 +2,8 @@
 
 > Autonomous DeFAI yield optimization — your capital, always working at peak efficiency.
 
+**[Demo Video](https://youtu.be/PF0_yvuteCE)** | **[Slide Deck](https://gamma.app/docs/Autonomous-DeFAI-Yield-Optimization-on-Conflux-eSpace-8izfjq0he4sjqc6?mode=doc)** | **[Live App](https://confluxmind.vercel.app)** | **[About Page](https://confluxmind.vercel.app/about)**
+
 ---
 
 ## Overview
