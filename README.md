@@ -22,11 +22,7 @@ ConfluxMind is the first fully on-chain DeFAI (Decentralized Finance + AI) yield
 
 ## Team
 
-- **Nosakhare Jesuorobo** — Lead Smart Contract Developer (GitHub: [@najnomics](https://github.com/najnomics), Discord: najnomics)
-- Team Member 2 (GitHub: @username, Discord: username)
-- Team Member 3 (GitHub: @username, Discord: username)
-- Team Member 4 (GitHub: @username, Discord: username)
-- Team Member 5 (GitHub: @username, Discord: username)
+- **Nosakhare Jesuorobo** — Solo Developer (GitHub: [@najnomics](https://github.com/najnomics), Discord: najnomics)
 
 ---
 
@@ -295,52 +291,187 @@ Decision: Rebalance to [35%, 34%, 31%] — dForce leads on risk-adjusted basis
 
 ## Architecture
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                        User Interface                            │
-│           React + Next.js + Wagmi (Conflux eSpace)              │
-└────────────────────────────┬────────────────────────────────────┘
-                             │  deposit / withdraw (gasless via Fee Sponsorship)
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   ConfluxMindVault.sol (ERC-4626)                │
-│  ┌──────────────────┐    ┌──────────────────────────────────┐   │
-│  │  Share Accounting│    │   GasSponsorManager.sol          │   │
-│  │  (cmToken mint/  │    │   (SponsorWhitelistControl       │   │
-│  │   burn + yield)  │    │    built-in at 0x0888...)        │   │
-│  └──────────────────┘    └──────────────────────────────────┘   │
-└──────────────┬─────────────────────────────────────────────────┘
-               │  allocate / rebalance (agent-signed)
-               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  StrategyController.sol                          │
-│   Maintains weighted allocation across registered strategies     │
-│   Validates agent calls · Executes atomic rebalances             │
-└──────┬──────────────────┬────────────────────────┬─────────────┘
-       │                  │                          │
-       ▼                  ▼                          ▼
-┌─────────────┐  ┌─────────────────┐  ┌──────────────────────┐
-│ dForce      │  │ SHUI Finance    │  │ WallFreeX            │
-│ Adapter.sol │  │ Adapter.sol     │  │ Adapter.sol          │
-│             │  │                 │  │                      │
-│ Unitus      │  │ CFX → sFX stake │  │ AxCNH/USDT0 LP      │
-│ lending     │  │ yield harvested │  │ fee yield harvested  │
-└─────────────┘  └─────────────────┘  └──────────────────────┘
+### System Overview
 
-               ▲  yield signals (every 5 min)
-               │
-┌─────────────────────────────────────────────────────────────────┐
-│              AIflux Agent (Eliza Action Pattern)                  │
-│  3-Factor Model: Yield Rate · Utilization Risk · Liquidity Depth │
-│  @cfxdevkit/geckoterminal · @conflux-devkit/node · ethers.js     │
-│  Signs rebalance calldata · Submits to StrategyController        │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (React + Next.js)"]
+        UI[Dashboard UI]
+        WC[Wallet Connect<br/>RainbowKit + Wagmi]
+        AR[AI Reasoning Panel]
+    end
+
+    subgraph Vault["ConfluxMindVault.sol (ERC-4626)"]
+        SA[Share Accounting<br/>cmToken mint/burn]
+        GSM[GasSponsorManager<br/>SponsorWhitelistControl]
+    end
+
+    subgraph Controller["StrategyController.sol"]
+        WM[Weight Manager]
+        AL[Allocator]
+    end
+
+    subgraph Strategies["Strategy Adapters (IStrategy)"]
+        S1[dForce Unitus<br/>Lending Yield]
+        S2[SHUI Finance<br/>CFX Staking]
+        S3[WallFreeX<br/>Stablecoin LP]
+    end
+
+    subgraph Agent["AIflux Agent (Eliza Pattern)"]
+        SC[3-Factor Scoring]
+        YP[Yield Provider<br/>@cfxdevkit/geckoterminal]
+        RE[Rebalance Executor]
+    end
+
+    UI -->|deposit / withdraw| SA
+    WC -->|gasless tx| GSM
+    SA -->|allocate| AL
+    AL --> S1
+    AL --> S2
+    AL --> S3
+    Agent -->|"rebalance(weights[])"| WM
+    YP -->|market data| SC
+    SC -->|optimal weights| RE
+    RE -->|on-chain tx| WM
+    S1 -.->|yield signals| YP
+    S2 -.->|yield signals| YP
+    S3 -.->|yield signals| YP
+    AR -.->|reads scores| SC
+
+    style Frontend fill:#1e1b4b,stroke:#6366f1,color:#fff
+    style Vault fill:#1e1b4b,stroke:#8b5cf6,color:#fff
+    style Controller fill:#1e1b4b,stroke:#a78bfa,color:#fff
+    style Strategies fill:#1e1b4b,stroke:#c4b5fd,color:#fff
+    style Agent fill:#1e1b4b,stroke:#10b981,color:#fff
+```
+
+### AI Agent Decision Flow
+
+```mermaid
+flowchart LR
+    subgraph Input["Data Collection"]
+        A1[On-Chain APYs<br/>via ethers.js]
+        A2[Pool Utilization<br/>via contract state]
+        A3[TVL / Liquidity<br/>via @cfxdevkit/geckoterminal]
+    end
+
+    subgraph Scoring["3-Factor Scoring Model"]
+        F1["Yield Rate<br/>(40% weight)"]
+        F2["Utilization Risk<br/>(30% weight)"]
+        F3["Liquidity Depth<br/>(30% weight)"]
+        CS[Composite Score<br/>per strategy]
+    end
+
+    subgraph Decision["Decision Engine"]
+        NW[Normalize to<br/>BPS Weights]
+        TH{Delta ><br/>Threshold?}
+        EX[Execute<br/>Rebalance]
+        HO[Hold<br/>Current]
+    end
+
+    A1 --> F1
+    A2 --> F2
+    A3 --> F3
+    F1 --> CS
+    F2 --> CS
+    F3 --> CS
+    CS --> NW
+    NW --> TH
+    TH -->|Yes| EX
+    TH -->|No| HO
+
+    style Input fill:#0f172a,stroke:#6366f1,color:#fff
+    style Scoring fill:#0f172a,stroke:#f59e0b,color:#fff
+    style Decision fill:#0f172a,stroke:#10b981,color:#fff
+```
+
+### Smart Contract Interactions
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Vault as ConfluxMindVault<br/>(ERC-4626)
+    participant Controller as StrategyController
+    participant S1 as dForce Adapter
+    participant S2 as SHUI Adapter
+    participant S3 as WallFreeX Adapter
+    participant Agent as AIflux Agent
+
+    Note over User,Vault: Deposit Flow (gasless)
+    User->>Vault: deposit(amount, receiver)
+    Vault->>Vault: mint cmTokens
+    Vault->>Controller: allocate(amount)
+    Controller->>S1: deposit(40%)
+    Controller->>S2: deposit(30%)
+    Controller->>S3: deposit(30%)
+
+    Note over Agent,Controller: AI Rebalance Flow (every 5 min)
+    Agent->>Agent: Score strategies (3-factor)
+    Agent->>Controller: rebalance(newWeights[])
+    Controller->>S1: withdraw(excess)
+    Controller->>S2: deposit(additional)
+    Controller-->>Agent: Rebalanced event
+
+    Note over User,Vault: Withdraw Flow
+    User->>Vault: withdraw(amount, receiver, owner)
+    Vault->>Controller: deallocate(needed)
+    Controller->>S1: withdraw(share)
+    Controller->>S2: withdraw(share)
+    Controller->>S3: withdraw(share)
+    Controller->>Vault: return assets
+    Vault->>User: transfer + burn cmTokens
+```
+
+### Conflux Ecosystem Integration Map
+
+```mermaid
+graph LR
+    subgraph ConfluxMind["ConfluxMind Protocol"]
+        V[Vault]
+        C[Controller]
+        A[AI Agent]
+    end
+
+    subgraph Conflux["Conflux eSpace"]
+        ES[eSpace RPC]
+        GS[Gas Sponsorship<br/>SponsorWhitelistControl]
+        SC[ConfluxScan]
+    end
+
+    subgraph DeFi["Conflux DeFi Ecosystem"]
+        DF[dForce Unitus<br/>Lending Markets]
+        SH[SHUI Finance<br/>CFX Staking]
+        WF[WallFreeX<br/>Stablecoin LPs]
+    end
+
+    subgraph DevTools["Conflux DevKit"]
+        GT["@cfxdevkit/geckoterminal<br/>Pool & Price Data"]
+        CD["@conflux-devkit/node<br/>Chain Utilities"]
+        AF["AIflux / ElizaOS<br/>Agent Framework"]
+    end
+
+    V --- ES
+    V --- GS
+    C --> DF
+    C --> SH
+    C --> WF
+    A --> GT
+    A --> CD
+    A -.-> AF
+    V --- SC
+
+    style ConfluxMind fill:#1e1b4b,stroke:#6366f1,color:#fff
+    style Conflux fill:#0c4a6e,stroke:#38bdf8,color:#fff
+    style DeFi fill:#14532d,stroke:#4ade80,color:#fff
+    style DevTools fill:#431407,stroke:#fb923c,color:#fff
 ```
 
 **Key Design Decisions:**
+
 - The AI agent is permissioned but non-custodial — it can only call `rebalance()`, never touch user funds directly. Built on the Eliza action pattern from [cfxdevkit/AIflux](https://github.com/cfxdevkit/AIflux).
 - All strategy adapters implement a common `IStrategy` interface, making new protocol integrations a single adapter contract.
 - ERC-4626 compliance ensures ConfluxMind vault shares are natively composable with any future Conflux DeFi protocol.
+- The 3-factor scoring model ensures the AI makes decisions based on risk-adjusted metrics, not just raw APY.
 
 ---
 
